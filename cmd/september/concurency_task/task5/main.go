@@ -44,5 +44,5 @@ func main() {
 	wg.Wait()      // все воркеры закончили
 	close(results) // закрываем канал результатов
 
-	fmt.Println("v1 completed\n")
+	fmt.Println(" completed")
 }
