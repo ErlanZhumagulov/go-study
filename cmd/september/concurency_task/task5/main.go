@@ -35,9 +35,8 @@ func main() {
 
 	// Горутина для получения результатов
 	go func() {
-		for i := 0; i < numTasks; i++ {
-			result := <-results
-			fmt.Printf("Result: %d\n", result)
+		for v := range results {
+			fmt.Printf("Result: %d\n", v)
 		}
 	}()
 
