@@ -2,40 +2,47 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 )
 
-//Сделай воркер-пул: N воркеров читают из канала задачи
-//и обрабатывают их. Главная горутина пишет в канал 100 заданий. Используй
-//WaitGroup, чтобы дождаться выполнения.
-
 func main() {
 
-	wg := &sync.WaitGroup{}
-	ch := make(chan int)
-	n := 10
+	const numWorkers = 3
+	const numTasks = 100 // много задач!
 
-	wg.Add(n)
+	var wg sync.WaitGroup
+	tasks := make(chan int, 10)  // небольшой буфер для задач
+	results := make(chan int, 3) // небольшой буфер для результатов
 
-	for range n {
-		go func() {
+	// Запуск воркеров
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func(id int) {
 			defer wg.Done()
-			for {
-				v, ok := <-ch
-				if !ok {
-					break
-				}
-				fmt.Println("Получено задание " + strconv.Itoa(v))
+			for task := range tasks {
+				results <- task * task
 			}
-		}()
+		}(i)
 	}
 
-	for i := 0; i < 100; i++ {
-		ch <- i
-	}
-	close(ch)
+	// Горутина для отправки задач
+	go func() {
+		defer close(tasks)
+		for i := 0; i < numTasks; i++ {
+			tasks <- i
+		}
+	}()
 
-	wg.Wait()
+	// Горутина для получения результатов
+	go func() {
+		for i := 0; i < numTasks; i++ {
+			result := <-results
+			fmt.Printf("Result: %d\n", result)
+		}
+	}()
 
+	wg.Wait()      // все воркеры закончили
+	close(results) // закрываем канал результатов
+
+	fmt.Println("v1 completed\n")
 }
